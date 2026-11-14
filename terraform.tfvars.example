@@ -1,7 +1,5 @@
-region         = "us-east-1"
-tf_state_bucket = "REPLACE_WITH_PRIVATE_TERRAFORM_STATE_BUCKET"
-master_username = "REPLACE_WITH_DB_USERNAME"
-# Supply the password through TF_VAR_master_password; do not save it here.
-instance_class = "db.t4g.micro"
+region          = "us-east-1"
+master_username = "application_db_admin"
+instance_class  = "db.t4g.micro"
 allocated_storage_gib = 20
 backup_retention_days = 7

@@ -4,21 +4,10 @@ variable "region" {
   default     = "us-east-1"
 }
 
-variable "tf_state_bucket" {
-  description = "S3 bucket containing the infra-k8s Terraform state."
-  type        = string
-}
-
 variable "master_username" {
   description = "Master username shared by the isolated service databases."
   type        = string
-  sensitive   = true
-}
-
-variable "master_password" {
-  description = "Master password for the isolated service databases."
-  type        = string
-  sensitive   = true
+  default     = "application_db_admin"
 }
 
 variable "instance_class" {

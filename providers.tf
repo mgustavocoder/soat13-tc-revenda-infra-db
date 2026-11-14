@@ -12,13 +12,3 @@ terraform {
 provider "aws" {
   region = var.region
 }
-
-data "terraform_remote_state" "k8s" {
-  backend = "s3"
-
-  config = {
-    bucket = var.tf_state_bucket
-    key    = "infra-k8s/terraform.tfstate"
-    region = var.region
-  }
-}

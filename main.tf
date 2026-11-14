@@ -15,17 +15,48 @@ locals {
   }
 }
 
+data "aws_vpc" "k8s" {
+  filter {
+    name   = "tag:Name"
+    values = ["soat13-tc-revenda-vpc"]
+  }
+}
+
+data "aws_subnets" "private" {
+  filter {
+    name   = "vpc-id"
+    values = [data.aws_vpc.k8s.id]
+  }
+
+  filter {
+    name   = "tag:Name"
+    values = ["soat13-tc-revenda-vpc-private-*"]
+  }
+}
+
+data "aws_security_group" "eks_nodes" {
+  filter {
+    name   = "vpc-id"
+    values = [data.aws_vpc.k8s.id]
+  }
+
+  filter {
+    name   = "tag:Name"
+    values = ["soat13-tc-revenda-node"]
+  }
+}
+
 resource "aws_security_group" "rds" {
   name        = "soat13-tc-revenda-rds"
   description = "MySQL access from the EKS worker nodes only"
-  vpc_id      = data.terraform_remote_state.k8s.outputs.vpc_id
+  vpc_id      = data.aws_vpc.k8s.id
 
   ingress {
     description     = "MySQL from EKS worker nodes"
     from_port       = 3306
     to_port         = 3306
     protocol        = "tcp"
-    security_groups = [data.terraform_remote_state.k8s.outputs.eks_node_security_group_id]
+    security_groups = [data.aws_security_group.eks_nodes.id]
   }
 
   egress {
@@ -42,7 +73,7 @@ resource "aws_security_group" "rds" {
 
 resource "aws_db_subnet_group" "main" {
   name       = "soat13-tc-revenda-db"
-  subnet_ids = data.terraform_remote_state.k8s.outputs.private_subnet_ids
+  subnet_ids = data.aws_subnets.private.ids
 
   tags = {
     Project = "soat13-tc-revenda"
@@ -62,7 +93,7 @@ resource "aws_db_instance" "service" {
   storage_encrypted               = true
   db_name                         = each.value.name
   username                        = var.master_username
-  password                        = var.master_password
+  manage_master_user_password     = true
   port                            = 3306
   publicly_accessible             = false
   multi_az                        = false
@@ -91,4 +122,9 @@ output "db_hosts" {
 output "db_names" {
   description = "Database names by microservice."
   value       = { for service, instance in aws_db_instance.service : service => instance.db_name }
+}
+
+output "db_master_secret_arns" {
+  description = "RDS-managed Secrets Manager ARNs for the generated database master credentials."
+  value       = { for service, instance in aws_db_instance.service : service => instance.master_user_secret[0].secret_arn }
 }
