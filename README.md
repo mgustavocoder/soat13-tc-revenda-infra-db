@@ -38,7 +38,10 @@ instance by default; review AWS pricing and availability requirements before
 applying. Deletion protection and final snapshots are enabled.
 
 Outputs `db_hosts`, `db_names`, and `db_master_secret_arns` are consumed by the
-Kubernetes deploy script. The RDS instances are private and are not exposed to
+Kubernetes deploy script, which applies each service's `database/init.sql`
+through a Kubernetes Job on every deploy. The scripts are idempotent and also
+carry schema migrations (for example, the `venda_codigo` column that Veículos
+uses to make the choreographed sale Saga idempotent). The RDS instances are private and are not exposed to
 the internet.
 
 ## Data protection and operational limits
